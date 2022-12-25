@@ -1,0 +1,21 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: 当前文件",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "variablePresentation": {
+                "function": "hide",
+                "special": "hide",
+            },
+            "justMyCode": false,
+            "args": ["--model_name_or_path", "W:\\bert-models\\bart-base-chinese", "--train_file", "dataset/CMeEE_train.json", "--validation_file", "dataset/CMeEE_dev.json","--output_dir", "./output"]
+        }
+    ]
+}
