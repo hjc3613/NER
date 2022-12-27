@@ -8,8 +8,8 @@ logging.basicConfig(level=logging.INFO)  # OPTIONAL
 # tokenizer = BertTokenizer.from_pretrained(r'E:\git_root\bert_models\bert-base-chinese')
 # model = BertForMaskedLM.from_pretrained(r'E:\git_root\bert_models\bert-base-chinese')
 
-tokenizer = BertTokenizer.from_pretrained(r'E:\git_root\bert_models\ernie-3.0-base-zh')
-model = ErnieForMaskedLM.from_pretrained(r'E:\git_root\bert_models\ernie-3.0-base-zh')
+tokenizer = BertTokenizer.from_pretrained(r'E:\git_root\bert_models\ernie-health-zh')
+model = ErnieForMaskedLM.from_pretrained(r'E:\git_root\bert_models\ernie-health-zh')
 model.eval()
 
 

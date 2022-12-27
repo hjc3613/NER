@@ -1,12 +1,10 @@
 import json
-import os
 import re
-from collections import defaultdict
 
 from torch.utils.data import Dataset
 import torch
 
-from .config_utils import *
+from config.config_utils import *
 
 def clean_text(s):
     result = re.sub(r'\ufeff', '|', s)
