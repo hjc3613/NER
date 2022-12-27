@@ -6,7 +6,7 @@ LABELS = ['sym', 'dis', 'pro', 'equ', 'dru', 'ite', 'bod', 'dep', 'mic']
 LABEL2IDX = {label:idx for idx, label in enumerate(LABELS)}
 IDX2LABEL = {idx:label for label, idx in LABEL2IDX.items()}
 
-BERT_PATH = r'W:\bert-models\bert-base-chinese'
+BERT_PATH = r'E:\git_root\bert_models\bert-base-chinese'
 
 TOKENIZER:BertTokenizer = BertTokenizer.from_pretrained(BERT_PATH)
 
