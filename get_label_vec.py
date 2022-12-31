@@ -14,6 +14,7 @@ from dataset.data_utils import CMeEEDataset, collate_fn_has_lavel_vec
 @torch.no_grad()
 def get_label_vecs(path):
     model = ErnieModel.from_pretrained(BERT_PATH)
+    model.to(DEVICE)
     dataset = CMeEEDataset(r'CMeEE/CMeEE_train.json')
     dataloder = DataLoader(dataset, collate_fn=collate_fn_has_lavel_vec, shuffle=False, batch_size=16)
     vecs_each_label = {}
@@ -23,6 +24,7 @@ def get_label_vecs(path):
         entity_idx_each_label = batch.pop('entity_idx_each_label')
         start_positions = batch.pop('start_positions')
         end_positions = batch.pop('end_positions')
+        batch = {k:v.to(DEVICE) for k,v in batch.items()}
         outputs = model(**batch)
         seq_output = outputs.last_hidden_state
         seq_output
@@ -36,6 +38,7 @@ def get_label_vecs(path):
     
     print(vecs_each_label_num)
     vecs_each_label = {k:v/vecs_each_label_num[k] for k,v in vecs_each_label.items()}
+    vecs_each_label = {k:v.to('cpu') for k,v in vecs_each_label.items()}
     with open(path, mode='wb') as f:
         pickle.dump(vecs_each_label, f)
 

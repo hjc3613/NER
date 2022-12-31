@@ -9,6 +9,7 @@ IDX2LABEL = {idx:label for label, idx in LABEL2IDX.items()}
 BERT_NAME = "ernie-3.0-base-zh"
 BERT_PATH = f'W:/bert-models/{BERT_NAME}'
 
+DEVICE = 'cuda:0'
 
 TOKENIZER:BertTokenizer = BertTokenizer.from_pretrained(BERT_PATH)
 # ENCODER = ErnieModel.from_pretrained(BERT_PATH)
