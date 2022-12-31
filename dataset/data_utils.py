@@ -65,8 +65,6 @@ def process_record_batch(records):
             ent = ent_item['entity']
             label = ent_item['type']
             ent_ = ''.join(TOKENIZER.convert_ids_to_tokens(inputs['input_ids'][idx][start:end+1]))
-            if ent_ == '制品输注不':
-                print()
             if ent.lower() != ent_:
                 print(ent, '->', ent_, '\ufeff' in record['text'])
             target_start[idx][LABEL2IDX[label]][start] = 1

@@ -9,7 +9,7 @@ IDX2LABEL = {idx:label for label, idx in LABEL2IDX.items()}
 BERT_PATH = r'E:\git_root\bert_models\ernie-3.0-base-zh'
 
 TOKENIZER:BertTokenizer = BertTokenizer.from_pretrained(BERT_PATH)
-ENCODER = ErnieModel.from_pretrained(BERT_PATH)
+# ENCODER = ErnieModel.from_pretrained(BERT_PATH)
 
 MAX_SEQ_LEN = 512
 
