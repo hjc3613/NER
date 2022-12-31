@@ -6,7 +6,9 @@ LABELS = ['sym', 'dis', 'pro', 'equ', 'dru', 'ite', 'bod', 'dep', 'mic']
 LABEL2IDX = {label:idx for idx, label in enumerate(LABELS)}
 IDX2LABEL = {idx:label for label, idx in LABEL2IDX.items()}
 
-BERT_PATH = r'E:\git_root\bert_models\ernie-3.0-base-zh'
+BERT_NAME = "ernie-3.0-base-zh"
+BERT_PATH = f'W:/bert-models/{BERT_NAME}'
+
 
 TOKENIZER:BertTokenizer = BertTokenizer.from_pretrained(BERT_PATH)
 # ENCODER = ErnieModel.from_pretrained(BERT_PATH)

@@ -1,5 +1,6 @@
 import json
 import re
+from functools import partial
 
 from torch.utils.data import Dataset
 import torch
@@ -49,28 +50,39 @@ def process_record(record):
     return {'inputs': inputs, 'target_start': target_start, 'target_end': target_end, 'entity_spans': entity_spans,
             'text': text}
 
-def process_record_batch(records):
+def process_record_batch(records, has_label_vec):
     texts = [i['text'].lower() if TO_LOWER else i['text'] for i in records]
     texts = [clean_text(s) for s in texts]
     texts = [list(i) for i in texts]
-    inputs = TOKENIZER(texts, is_split_into_words=True, padding=True, max_length=MAX_SEQ_LEN, return_tensors='pt')
+    inputs = TOKENIZER(texts, is_split_into_words=True, padding="longest", truncation=True, return_tensors='pt', max_length=MAX_SEQ_LEN)
     batch_len = inputs['input_ids'].shape[1]
     target_start = torch.zeros((len(records), len(LABELS), batch_len))
     target_end = torch.zeros((len(records), len(LABELS), batch_len))
+    entity_idx_each_label = [[] for _ in range(len(records))]
     for idx, record in enumerate(records):
         entities = record['entities']
         for ent_item in entities:
+            if (ent_item['start_idx'] > ent_item['end_idx']) or (ent_item['end_idx'] > MAX_SEQ_LEN - 2):
+                continue
             start = ent_item['start_idx']+1
             end = ent_item['end_idx'] + 1
-            ent = ent_item['entity']
+            entity = ent_item['entity']
             label = ent_item['type']
-            ent_ = ''.join(TOKENIZER.convert_ids_to_tokens(inputs['input_ids'][idx][start:end+1]))
-            if ent.lower() != ent_:
-                print(ent, '->', ent_, '\ufeff' in record['text'])
+            entity_ = ''.join(TOKENIZER.convert_ids_to_tokens(inputs['input_ids'][idx][start:end+1]))
+            if entity.lower() != entity_:
+                print(entity, '->', entity_, '\ufeff' in record['text'], '\n')
             target_start[idx][LABEL2IDX[label]][start] = 1
             target_end[idx][LABEL2IDX[label]][end] = 1
+            entity_idx_each_label[idx].append((start, end, label, entity))
+    if has_label_vec:
+        result = {**inputs, "start_positions":target_start, "end_positions":target_end, "entity_idx_each_label":entity_idx_each_label}
+    else:
+        result = {**inputs, "start_positions":target_start, "end_positions":target_end}
 
-    inputs
+    return result
 
-def collate_fn(batch):
-    process_record_batch(batch)
+def collate_fn(batch, has_label_vec):
+    return process_record_batch(batch, has_label_vec)
+
+collate_fn_no_lavel_vec = partial(collate_fn, has_label_vec=False)
+collate_fn_has_lavel_vec = partial(collate_fn, has_label_vec=True)
