@@ -54,10 +54,10 @@ def process_record_batch(records, has_label_vec):
     texts = [i['text'].lower() if TO_LOWER else i['text'] for i in records]
     texts = [clean_text(s) for s in texts]
     texts = [list(i) for i in texts]
-    inputs = TOKENIZER(texts, is_split_into_words=True, padding="longest", truncation=True, return_tensors='pt', max_length=MAX_SEQ_LEN)
-    batch_len = inputs['input_ids'].shape[1]
-    target_start = torch.zeros((len(records), len(LABELS), batch_len))
-    target_end = torch.zeros((len(records), len(LABELS), batch_len))
+    inputs = TOKENIZER(texts, is_split_into_words=True, padding="max_length", truncation=True, return_tensors='pt', max_length=MAX_SEQ_LEN)
+    seq_len = inputs['input_ids'].shape[1]
+    target_start = torch.zeros((len(records), len(LABELS), seq_len))
+    target_end = torch.zeros((len(records), len(LABELS), seq_len))
     entity_idx_each_label = [[] for _ in range(len(records))]
     for idx, record in enumerate(records):
         entities = record['entities']
@@ -75,9 +75,9 @@ def process_record_batch(records, has_label_vec):
             target_end[idx][LABEL2IDX[label]][end] = 1
             entity_idx_each_label[idx].append((start, end, label, entity))
     if has_label_vec:
-        result = {**inputs, "start_positions":target_start, "end_positions":target_end, "entity_idx_each_label":entity_idx_each_label}
+        result = {**inputs, "start_positions_label":target_start, "end_positions_label":target_end, "entity_idx_each_label":entity_idx_each_label}
     else:
-        result = {**inputs, "start_positions":target_start, "end_positions":target_end}
+        result = {**inputs, "start_positions_label":target_start, "end_positions_label":target_end}
 
     return result
 

@@ -14,7 +14,7 @@ from dataset.data_utils import CMeEEDataset, collate_fn_has_lavel_vec
 @torch.no_grad()
 def get_label_vecs(path):
     model = ErnieModel.from_pretrained(BERT_PATH)
-    model.to(DEVICE)
+    model = model.to(DEVICE)
     dataset = CMeEEDataset(r'CMeEE/CMeEE_train.json')
     dataloder = DataLoader(dataset, collate_fn=collate_fn_has_lavel_vec, shuffle=False, batch_size=16)
     vecs_each_label = {}

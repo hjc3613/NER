@@ -15,7 +15,8 @@
                 "special": "hide",
             },
             "justMyCode": false,
-            "args": ["--model_name_or_path", "W:\\bert-models\\bart-base-chinese", "--train_file", "dataset/CMeEE_train.json", "--validation_file", "dataset/CMeEE_dev.json","--output_dir", "./output"]
+            "args": [],
+            "env": {"WANDB_DISABLED":"true", "PYTHONDONTWRITEBYTECODE":"1"}
         }
     ]
 }
