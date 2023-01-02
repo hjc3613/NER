@@ -40,8 +40,9 @@ class BertSpanForNEROutPut(ModelOutput):
             heads.
     """
     loss: Optional[torch.FloatTensor] = None
-    logits_start_pos: torch.FloatTensor = None
-    logits_end_pos: torch.FloatTensor = None
+    # logits_start_pos: torch.FloatTensor = None
+    # logits_end_pos: torch.FloatTensor = None
+    logits: Optional[torch.FloatTensor] = None
     hidden_states: Optional[Tuple[torch.FloatTensor]] = None
     attentions: Optional[Tuple[torch.FloatTensor]] = None
 
@@ -113,9 +114,10 @@ class BertSpanForNER(ErniePreTrainedModel):
         self.config = config
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
         self.ernie = ErnieModel(config)
-        self.add_label_vec = AddLabelVec(os.path.join(BERT_PATH, F'vec_for_each_label_{BERT_NAME}.pkl'), requires_grad=False)
-        self.start_pos_classifier = MultiLinear(len(LABELS), in_features=config.hidden_size, out_features=1, sigmoid=False)
-        self.end_pos_classifier = MultiLinear(len(LABELS), in_features=config.hidden_size, out_features=1, sigmoid=False)
+        # self.add_label_vec = AddLabelVec(os.path.join(BERT_PATH, F'vec_for_each_label_{BERT_NAME}.pkl'), requires_grad=False)
+        # self.start_pos_classifier = MultiLinear(len(LABELS), in_features=config.hidden_size, out_features=1, sigmoid=False)
+        # self.end_pos_classifier = MultiLinear(len(LABELS), in_features=config.hidden_size, out_features=1, sigmoid=False)
+        self.classifier = MultiLinear(len(LABELS), in_features=config.hidden_size, out_features=3, sigmoid=False)
 
     def forward(self,
         input_ids: Optional[torch.Tensor] = None,
@@ -125,13 +127,14 @@ class BertSpanForNER(ErniePreTrainedModel):
         position_ids: Optional[torch.Tensor] = None,
         head_mask: Optional[torch.Tensor] = None,
         inputs_embeds: Optional[torch.Tensor] = None,
-        start_positions_label: Optional[torch.Tensor] = None,
-        end_positions_label: Optional[torch.Tensor] = None,
+        # start_positions_label: Optional[torch.Tensor] = None,
+        # end_positions_label: Optional[torch.Tensor] = None,
+        label:Optional[torch.Tensor] = None,
         output_attentions: Optional[bool] = None,
         output_hidden_states: Optional[bool] = None,
         return_dict: Optional[bool] = None,
         text: Optional[list] = None,
-        entities: Optional[list]=None
+        entities: Optional[list]=None,
     ) -> Union[Tuple[torch.Tensor], BertSpanForNEROutPut]:
         return_dict = return_dict if return_dict is not None else self.config.use_return_dict
         outputs = self.ernie(
@@ -148,25 +151,31 @@ class BertSpanForNER(ErniePreTrainedModel):
         )
         sequence_output = outputs[0]
         sequence_output = self.dropout(sequence_output)
-        seq_output_add_label_vec = self.add_label_vec(sequence_output) # shape: [label_num, bsz, seq_len, hid_dim]
-        seq_output_add_label_vec = torch.transpose(seq_output_add_label_vec, 0, 1) # shape: [bsz, label_num, seq_len, hid_dim]
-        logits_start_pos = self.start_pos_classifier(seq_output_add_label_vec)
-        logits_end_pos = self.end_pos_classifier(seq_output_add_label_vec)
+        # seq_output_add_label_vec = self.add_label_vec(sequence_output) # shape: [label_num, bsz, seq_len, hid_dim]
+        # seq_output_add_label_vec = torch.transpose(seq_output_add_label_vec, 0, 1) # shape: [bsz, label_num, seq_len, hid_dim]
+        # logits_start_pos = self.start_pos_classifier(seq_output_add_label_vec)
+        # logits_end_pos = self.end_pos_classifier(seq_output_add_label_vec)
+        logits = torch.randn(sequence_output.shape[0], len(LABELS), sequence_output.shape[1], 3, requires_grad=True)
 
         loss = None
-        if start_positions_label is not None and end_positions_label is not None:
-            criterion = nn.BCEWithLogitsLoss()
-            start_loss = criterion(logits_start_pos, start_positions_label)
-            end_loss = criterion(logits_end_pos, end_positions_label)
-            loss = start_loss + end_loss
+        # if start_positions_label is not None and end_positions_label is not None:
+        if label is not None:
+            # criterion = nn.BCEWithLogitsLoss()
+            # start_loss = criterion(logits_start_pos, start_positions_label)
+            # end_loss = criterion(logits_end_pos, end_positions_label)
+            # loss = start_loss + end_loss
+            criterion = nn.CrossEntropyLoss()
+            loss = criterion(logits.view(-1, logits.shape[-1]), label.long().view(-1))
 
         if not return_dict:
-            output = (logits_start_pos, logits_end_pos) + outputs[2:]
+            # output = (logits_start_pos, logits_end_pos) + outputs[2:]
+            output = (logits) + outputs[2:]
             return ((loss,) + output) if loss is not None else output
         return BertSpanForNEROutPut(
             loss=loss,
-            logits_start_pos=torch.sigmoid(logits_start_pos),
-            logits_end_pos=torch.sigmoid(logits_end_pos),
+            # logits_start_pos=torch.sigmoid(logits_start_pos),
+            # logits_end_pos=torch.sigmoid(logits_end_pos),
+            logits = logits,
             hidden_states=outputs.hidden_states,
             attentions=outputs.attentions,
         )

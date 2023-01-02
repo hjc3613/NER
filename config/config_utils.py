@@ -16,4 +16,4 @@ TOKENIZER:BertTokenizer = BertTokenizer.from_pretrained(BERT_PATH)
 
 MAX_SEQ_LEN = 512
 
-TO_LOWER = True
+TO_LOWER = False

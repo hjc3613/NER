@@ -78,11 +78,36 @@ def process_record_batch(records, has_label_vec):
         result = {**inputs, "start_positions_label":target_start, "end_positions_label":target_end, "entity_idx_each_label":entity_idx_each_label}
     else:
         result = {**inputs, "start_positions_label":target_start, "end_positions_label":target_end}
-
     return result
+
+
+def process_record_batch2(records):
+    texts = [i['text'].lower() if TO_LOWER else i['text'] for i in records]
+    texts = [clean_text(s) for s in texts]
+    texts = [list(i) for i in texts]
+    inputs = TOKENIZER(texts, is_split_into_words=True, padding="max_length", truncation=True, return_tensors='pt', max_length=MAX_SEQ_LEN)
+    seq_len = inputs['input_ids'].shape[1]
+    target = torch.zeros((len(records), len(LABELS), seq_len))
+    for idx, record in enumerate(records):
+        entities = record['entities']
+        for ent_item in entities:
+            # 训练集中有少量的索引问题，例如起始位置大于结束位置，需过滤除去。大于最大句子长度的，也要过滤除去。
+            if (ent_item['start_idx'] > ent_item['end_idx']) or (ent_item['end_idx'] > MAX_SEQ_LEN - 2):
+                continue
+            start = ent_item['start_idx']+1
+            end = ent_item['end_idx'] + 1
+            entity = ent_item['entity']
+            label = ent_item['type']
+            entity_ = ''.join(TOKENIZER.convert_ids_to_tokens(inputs['input_ids'][idx][start:end+1]))
+            if entity.lower() != entity_:
+                print(entity, '->', entity_)
+            target[idx][LABEL2IDX[label]][start:end+1] = torch.Tensor([1] + [2]*(end-start))
+    return {**inputs, 'label':target}
+
 
 def collate_fn(batch, has_label_vec):
     return process_record_batch(batch, has_label_vec)
 
 collate_fn_no_lavel_vec = partial(collate_fn, has_label_vec=False)
 collate_fn_has_lavel_vec = partial(collate_fn, has_label_vec=True)
+collate_fn_each_label = process_record_batch2

@@ -22,8 +22,8 @@ def get_label_vecs(path):
 
     for batch in tqdm(dataloder, desc='获取每个标签的向量'):
         entity_idx_each_label = batch.pop('entity_idx_each_label')
-        start_positions = batch.pop('start_positions')
-        end_positions = batch.pop('end_positions')
+        start_positions = batch.pop('start_positions_label')
+        end_positions = batch.pop('end_positions_label')
         batch = {k:v.to(DEVICE) for k,v in batch.items()}
         outputs = model(**batch)
         seq_output = outputs.last_hidden_state
