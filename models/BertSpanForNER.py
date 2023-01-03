@@ -118,6 +118,14 @@ class BertSpanForNER(ErniePreTrainedModel):
         # self.start_pos_classifier = MultiLinear(len(LABELS), in_features=config.hidden_size, out_features=1, sigmoid=False)
         # self.end_pos_classifier = MultiLinear(len(LABELS), in_features=config.hidden_size, out_features=1, sigmoid=False)
         self.classifier = MultiLinear(len(LABELS), in_features=config.hidden_size, out_features=3, sigmoid=False)
+        self.conv1d_out_channels = 128
+        self.conv1d_for_each_label_nums = len(LABELS)
+        out_channels = self.conv1d_out_channels * self.conv1d_for_each_label_nums
+        self.conv1d_feature = nn.Sequential(
+            nn.Conv1d(in_channels=config.hidden_size, out_channels=out_channels, kernel_size=3, padding=1),
+            nn.Conv1d(in_channels=out_channels, out_channels=out_channels, kernel_size=3, padding=1),
+            nn.Conv1d(in_channels=out_channels, out_channels=out_channels, kernel_size=3, padding=1),
+        )
 
     def forward(self,
         input_ids: Optional[torch.Tensor] = None,
@@ -149,12 +157,18 @@ class BertSpanForNER(ErniePreTrainedModel):
             output_hidden_states=output_hidden_states,
             return_dict=return_dict,
         )
-        sequence_output = outputs[0]
+        sequence_output = outputs[0] # shape: [bsz, seq_len(512), hid_dim(768)]
+        # sequence_output = sequence_output.unsqueeze(1) # shape: [bsz, 1, seq_len, hidden_dim]
+        # sequence_output = sequence_output.expand(-1, len(LABELS), -1, -1) # shape: a new view [bsz, lalel_nums, seq_len, hidden_dim]
         sequence_output = self.dropout(sequence_output)
+        self.conv1d_feature(sequence_output.transpose(1, 2)) # conv1d input shulde be : [bsz, hid_dim, seq_len]
+        
         # seq_output_add_label_vec = self.add_label_vec(sequence_output) # shape: [label_num, bsz, seq_len, hid_dim]
         # seq_output_add_label_vec = torch.transpose(seq_output_add_label_vec, 0, 1) # shape: [bsz, label_num, seq_len, hid_dim]
         # logits_start_pos = self.start_pos_classifier(seq_output_add_label_vec)
         # logits_end_pos = self.end_pos_classifier(seq_output_add_label_vec)
+
+
         logits = torch.randn(sequence_output.shape[0], len(LABELS), sequence_output.shape[1], 3, requires_grad=True)
 
         loss = None
